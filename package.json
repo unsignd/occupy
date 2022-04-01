@@ -1,0 +1,25 @@
+{
+  "name": "occupy-front",
+  "version": "1.0.0",
+  "description": "the online occupy game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/unsignd/occupy.git"
+  },
+  "keywords": [],
+  "author": "Yejun Kim <unsigndid@gmail.com> (https://github.com/unsignd)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/unsignd/occupy/issues"
+  },
+  "homepage": "https://github.com/unsignd/occupy#readme",
+  "dependencies": {
+    "dgram": "^1.0.1",
+    "express": "^4.17.3",
+    "socket.io": "^4.4.1"
+  }
+}

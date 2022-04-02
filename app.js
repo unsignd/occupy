@@ -10,8 +10,17 @@ const io = require('socket.io')(http, {
 http.listen(3000);
 
 const userDataArr = [];
+const pendingArr = [];
 const hexList = ['#009dff', '#3bb273', '#ff6f69', '#5344a9', '#f2c800'];
 const provinceArr = [
+  {
+    owner: null,
+    hp: 100,
+  },
+  {
+    owner: null,
+    hp: 100,
+  },
   {
     owner: null,
     hp: 100,
@@ -38,6 +47,44 @@ const increaseHP = setInterval(() => {
   });
 }, 1000);
 
+const decreaseHP = setInterval(() => {
+  pendingArr.forEach((pending) => {
+    if (
+      provinceArr.find(
+        (province) =>
+          province.id === pending.startId || province.id === pending.endId
+      ) !== undefined
+    ) {
+      const startProvince = provinceArr.find(
+        (province) => province.id === pending.startId
+      );
+      const endProvince = provinceArr.find(
+        (province) => province.id === pending.endId
+      );
+
+      if (pending.amount > 0) {
+        pending.amount--;
+        startProvince.hp--;
+
+        if (endProvince.owner === startProvince.owner) {
+          endProvince.hp++;
+        } else {
+          endProvince.hp--;
+        }
+
+        if (endProvince.hp < 0) {
+          endProvince.owner = startProvince.owner;
+          endProvince.hp = 0;
+        }
+
+        if (startProvince.hp < pending.amount) {
+          pending.amount = startProvince.hp;
+        }
+      }
+    }
+  });
+}, 100);
+
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected.`);
 
@@ -45,8 +92,9 @@ io.on('connection', (socket) => {
     socket.emit('load_data', {
       userData: userDataArr,
       provinceData: provinceArr,
+      pendingData: pendingArr,
     });
-  }, 1000);
+  }, 100);
 
   socket.emit('load_data', {
     userData: userDataArr,
@@ -88,5 +136,9 @@ io.on('connection', (socket) => {
         socket.emit('success_game_join');
       }
     }
+  });
+
+  socket.on('pending_start', (data) => {
+    pendingArr.push(data);
   });
 });

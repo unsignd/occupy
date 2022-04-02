@@ -9,6 +9,7 @@ function Game() {
   interface IProvince {
     id: number;
     owner: string | null;
+    type?: string;
     hp: number;
     x: number;
     y: number;
@@ -35,6 +36,9 @@ function Game() {
   const [users, setUsers] = useState<Array<IUser>>();
   const [nickname, setNickname] = useState<string>();
   const [isJoined, setIsJoined] = useState<boolean>(false);
+  const [isStart, setIsStart] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [winnerList, setWinnerList] = useState<Array<IUser>>([]);
   const [mousePos, setMousePos] = useState<{
     x: number;
     y: number;
@@ -52,19 +56,40 @@ function Game() {
         userData: Array<IUser>;
         provinceData: Array<IProvince>;
         pendingData: Array<IPeding>;
+        winnerData: Array<IUser>;
       }) => {
         setProvinces(data.provinceData);
         setUsers(data.userData);
         setPendings(data.pendingData);
+        setWinnerList(data.winnerData);
       }
     );
+
+    socket.on('admin_changed', (uid: string) => {
+      setIsAdmin(socket.id === uid);
+    });
 
     socket.on('error_game_join', (msg: string) => {
       alert(msg);
     });
 
-    socket.on('success_game_join', () => {
+    socket.on('success_game_join', (isAdmin) => {
       setIsJoined(true);
+      setIsAdmin(isAdmin);
+    });
+
+    socket.on('success_game_start', () => {
+      setIsStart(true);
+    });
+
+    socket.on('error_game_start', (msg: string) => {
+      alert(msg);
+    });
+
+    socket.on('game_end', () => {
+      setIsStart(false);
+      setIsAdmin(false);
+      setIsJoined(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -82,6 +107,51 @@ function Game() {
         });
       }}
     >
+      <div
+        style={{
+          position: 'absolute',
+          width: '100vw',
+          height: '100vh',
+          zIndex: 3,
+          backgroundColor: '#000000',
+          opacity: 0.85,
+          display: isStart ? 'none' : 'block',
+        }}
+      >
+        <p
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: 30,
+            fontWeight: 600,
+            color: '#007bff',
+            textAlign: 'center',
+            lineHeight: 1.6,
+          }}
+        >
+          occupy: 온라인 전략 땅따먹기 게임
+          <br />
+          <span
+            style={{
+              fontSize: 50,
+              fontWeight: 900,
+              color: '#fff',
+              textAlign: 'center',
+              marginTop: '50px !important',
+            }}
+          >
+            {typeof winnerList === 'undefined'
+              ? 'ㅤ'
+              : winnerList?.length === 0
+              ? '첫번째 우승자에 도전해보세요!'
+              : `${winnerList?.length}회 게임에서 ${
+                  winnerList[winnerList.length - 1].name
+                }님 우승!`}
+          </span>
+        </p>
+      </div>
       <ArcherContainer
         strokeColor="#ec4a57"
         style={{
@@ -103,7 +173,7 @@ function Game() {
             position: 'relative',
             width: '75vmin',
             height: '75vmin',
-            top: '50%',
+            top: 'calc(50% - 50px)',
             left: '50%',
             transform: 'translate(-50%, -50%)',
           }}
@@ -196,6 +266,7 @@ function Game() {
                                           (user) => user.uid === province.owner
                                         )?.color,
                                         borderRadius: '0.5rem',
+                                        zIndex: 2,
                                       }}
                                     >
                                       <p
@@ -209,7 +280,7 @@ function Game() {
                                           color: '#fff',
                                         }}
                                       >
-                                        {pending.amount} 전송중..
+                                        {pending.amount}명이 이동중..
                                       </p>
                                     </div>
                                   ),
@@ -295,7 +366,7 @@ function Game() {
                                           color: '#fff',
                                         }}
                                       >
-                                        {pending.amount} 만큼 이동중..
+                                        {pending.amount}명 이동중..
                                       </p>
                                     </div>
                                   ),
@@ -305,77 +376,155 @@ function Game() {
                       : undefined
                   }
                 >
-                  <i
-                    key={province.id}
-                    className="fa-brands fa-fort-awesome"
-                    style={{
-                      display: 'table',
-                      position: 'relative',
-                      top: 12,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      fontSize: 50,
-                      color:
-                        users?.length === 0 ||
-                        province.owner === null ||
-                        users?.find((user) => province.owner === user.uid) ===
-                          undefined
-                          ? '#616161'
-                          : users?.find((user) => province.owner === user.uid)
-                              ?.color,
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => {
-                      if (
-                        clickedId.startId === null &&
-                        users?.length !== 0 &&
-                        province.owner !== null &&
-                        province.owner === socket.id
-                      ) {
-                        setClickedId({
-                          startId: province.id,
-                          endId: null,
-                        });
-                      } else if (
-                        users?.length !== 0 &&
-                        province.owner !== null &&
-                        clickedId.startId === province.id
-                      ) {
-                        setClickedId({
-                          startId: null,
-                          endId: null,
-                        });
-                      } else if (
-                        clickedId.startId !== null &&
-                        clickedId.endId === null
-                      ) {
-                        setClickedId({
-                          startId: null,
-                          endId: null,
-                        });
+                  {typeof province.type !== 'undefined' &&
+                  province.type === 'flag' ? (
+                    <i
+                      key={province.id}
+                      className="fa-solid fa-flag"
+                      style={{
+                        display: 'table',
+                        position: 'relative',
+                        top: 12,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: 40,
+                        color:
+                          users?.length === 0 ||
+                          province.owner === null ||
+                          users?.find((user) => province.owner === user.uid) ===
+                            undefined
+                            ? '#616161'
+                            : users?.find((user) => province.owner === user.uid)
+                                ?.color,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        if (
+                          clickedId.startId === null &&
+                          users?.length !== 0 &&
+                          province.owner !== null &&
+                          province.owner === socket.id
+                        ) {
+                          setClickedId({
+                            startId: province.id,
+                            endId: null,
+                          });
+                        } else if (
+                          users?.length !== 0 &&
+                          province.owner !== null &&
+                          clickedId.startId === province.id
+                        ) {
+                          setClickedId({
+                            startId: null,
+                            endId: null,
+                          });
+                        } else if (
+                          clickedId.startId !== null &&
+                          clickedId.endId === null
+                        ) {
+                          setClickedId({
+                            startId: null,
+                            endId: null,
+                          });
 
-                        socket.emit('pending_start', {
-                          startId: clickedId.startId,
-                          endId: province.id,
-                          amount: provinces.find(
-                            (province) => province.id === clickedId.startId
-                          )?.hp,
-                        });
-                      }
-                    }}
-                  />
+                          socket.emit('pending_start', {
+                            startId: clickedId.startId,
+                            endId: province.id,
+                            amount: provinces.find(
+                              (province) => province.id === clickedId.startId
+                            )?.hp,
+                          });
+                        }
+                      }}
+                    />
+                  ) : (
+                    <i
+                      key={province.id}
+                      className="fa-brands fa-fort-awesome"
+                      style={{
+                        display: 'table',
+                        position: 'relative',
+                        top: 12,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: 50,
+                        color:
+                          users?.length === 0 ||
+                          province.owner === null ||
+                          users?.find((user) => province.owner === user.uid) ===
+                            undefined
+                            ? '#616161'
+                            : users?.find((user) => province.owner === user.uid)
+                                ?.color,
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        if (
+                          clickedId.startId === null &&
+                          users?.length !== 0 &&
+                          province.owner !== null &&
+                          province.owner === socket.id
+                        ) {
+                          setClickedId({
+                            startId: province.id,
+                            endId: null,
+                          });
+                        } else if (
+                          users?.length !== 0 &&
+                          province.owner !== null &&
+                          clickedId.startId === province.id
+                        ) {
+                          setClickedId({
+                            startId: null,
+                            endId: null,
+                          });
+                        } else if (
+                          clickedId.startId !== null &&
+                          clickedId.endId === null
+                        ) {
+                          setClickedId({
+                            startId: null,
+                            endId: null,
+                          });
+
+                          socket.emit('pending_start', {
+                            startId: clickedId.startId,
+                            endId: province.id,
+                            amount: provinces.find(
+                              (province) => province.id === clickedId.startId
+                            )?.hp,
+                          });
+                        }
+                      }}
+                    />
+                  )}
                 </ArcherElement>
               </div>
             </div>
           ))}
         </div>
       </ArcherContainer>
+      <p
+        style={{
+          position: 'absolute',
+          left: '50%',
+          bottom: 'calc(5% - 20px)',
+          transform: 'translateX(-50%)',
+          fontSize: 16,
+          fontWeight: 500,
+          color: '#007bff',
+          zIndex: 4,
+        }}
+      >
+        현재 유저수: {users?.length}명
+      </p>
       <div
         style={{
           position: 'absolute',
           left: '50%',
-          bottom: '5%',
+          bottom: 'calc(5% + 10px)',
           transform: 'translateX(-50%)',
+          zIndex: 4,
         }}
       >
         <input
@@ -390,13 +539,25 @@ function Game() {
         ></input>
         <button
           data-primary
-          onClick={() => socket.emit('join', nickname)}
+          onClick={() => {
+            if (!isJoined) {
+              socket.emit('join', nickname);
+            } else if (isAdmin) {
+              socket.emit('game_start');
+            }
+          }}
           style={{
             borderRadius: '0 0.5rem 0.5rem 0',
           }}
-          disabled={isJoined}
+          disabled={(isJoined && !isAdmin) || isStart}
         >
-          {isJoined ? '게임에 참가했어요.' : '게임 참가하기'}
+          {isStart
+            ? '게임이 시작됐어요.'
+            : isJoined
+            ? isAdmin
+              ? '게임 시작하기'
+              : '게임에 참가했어요.'
+            : '게임 참가하기'}
         </button>
       </div>
     </div>

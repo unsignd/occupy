@@ -7,7 +7,7 @@ const io = require('socket.io')(http, {
   },
 });
 
-http.listen(3000);
+http.listen(80);
 
 let adminUid;
 let gameStarted = false;

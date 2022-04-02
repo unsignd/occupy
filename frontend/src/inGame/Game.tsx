@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArcherContainer, ArcherElement } from 'react-archer';
+import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 import './Game.css';
 
@@ -25,6 +25,12 @@ function Game() {
     endId: number | null;
   }
 
+  interface IPeding {
+    startId: number;
+    endId: number;
+    amount: number;
+  }
+
   const [provinces, setProvinces] = useState<Array<IProvince>>();
   const [users, setUsers] = useState<Array<IUser>>();
   const [nickname, setNickname] = useState<string>();
@@ -37,21 +43,27 @@ function Game() {
     startId: null,
     endId: null,
   });
+  const [pendings, setPendings] = useState<Array<IPeding>>([]);
 
   useEffect(() => {
     socket.on(
       'load_data',
-      (data: { userData: Array<IUser>; provinceData: Array<IProvince> }) => {
+      (data: {
+        userData: Array<IUser>;
+        provinceData: Array<IProvince>;
+        pendingData: Array<IPeding>;
+      }) => {
         setProvinces(data.provinceData);
         setUsers(data.userData);
+        setPendings(data.pendingData);
       }
     );
 
-    socket.on('error_game_full', (msg: string) => {
+    socket.on('error_game_join', (msg: string) => {
       alert(msg);
     });
 
-    socket.on('success_game_full', () => {
+    socket.on('success_game_join', () => {
       setIsJoined(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,6 +110,7 @@ function Game() {
         >
           {provinces?.map((province) => (
             <div
+              key={province.id}
               style={{
                 position: 'relative',
                 display: 'inline',
@@ -120,7 +133,11 @@ function Game() {
                     transform: 'translateX(-50%)',
                     fontWeight: 800,
                     fontSize: 18,
-                    color: '#616161',
+                    color:
+                      province.owner === null || users?.length === 0
+                        ? '#616161'
+                        : users?.find((user) => user.uid === province.owner)
+                            ?.color,
                   }}
                 >
                   {province.owner === null || users?.length === 0
@@ -132,55 +149,159 @@ function Game() {
                 <ArcherElement
                   id={`${province.id}`}
                   relations={
+                    (pendings?.length !== 0 &&
+                      pendings?.find(
+                        (pending) => pending.startId === province.id
+                      ) !== undefined) ||
                     clickedId.startId === province.id
-                      ? [
-                          {
-                            targetId:
-                              clickedId.endId === null
-                                ? 'mousePos'
-                                : `${clickedId.endId}`,
-                            targetAnchor: 'middle',
-                            sourceAnchor: 'middle',
-                            style: {
-                              strokeColor: '#ec4a57',
-                              strokeWidth: 4,
-                              endShape: {
-                                circle: {
-                                  radius: 1,
-                                  fillColor: '#ec4a57',
-                                  strokeColor: '#ec4a57',
-                                  strokeWidth: 1,
+                      ? clickedId.startId === province.id &&
+                        clickedId.endId === null
+                        ? [
+                            ...pendings
+                              ?.filter(
+                                (pending) =>
+                                  pending.startId === province.id &&
+                                  pending.amount > 0
+                              )
+                              .map(
+                                (pending): Relation => ({
+                                  targetId: `${pending.endId}`,
+                                  targetAnchor: 'middle',
+                                  sourceAnchor: 'middle',
+                                  style: {
+                                    strokeColor: users?.find(
+                                      (user) => user.uid === province.owner
+                                    )?.color,
+                                    strokeWidth: 4,
+                                    endShape: {
+                                      circle: {
+                                        radius: 1,
+                                        fillColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        strokeColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        strokeWidth: 0.01,
+                                      },
+                                    },
+                                  },
+                                  label: (
+                                    <div
+                                      style={{
+                                        padding: '0 12px',
+                                        minWidth: 125,
+                                        height: 30,
+                                        backgroundColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        borderRadius: '0.5rem',
+                                      }}
+                                    >
+                                      <p
+                                        style={{
+                                          position: 'relative',
+                                          top: '50%',
+                                          transform: 'translateY(-50%)',
+                                          fontSize: 16,
+                                          fontWeight: 600,
+                                          textAlign: 'center',
+                                          color: '#fff',
+                                        }}
+                                      >
+                                        {pending.amount} 전송중..
+                                      </p>
+                                    </div>
+                                  ),
+                                })
+                              ),
+                            {
+                              targetId:
+                                clickedId.endId === null
+                                  ? 'mousePos'
+                                  : `${clickedId.endId}`,
+                              targetAnchor: 'middle',
+                              sourceAnchor: 'middle',
+                              style: {
+                                strokeColor: users?.find(
+                                  (user) => user.uid === socket.id
+                                )?.color,
+                                strokeWidth: 4,
+                                endShape: {
+                                  circle: {
+                                    radius: 1,
+                                    fillColor: users?.find(
+                                      (user) => user.uid === socket.id
+                                    )?.color,
+                                    strokeColor: users?.find(
+                                      (user) => user.uid === socket.id
+                                    )?.color,
+                                    strokeWidth: 0.01,
+                                  },
                                 },
                               },
                             },
-                            label:
-                              clickedId.startId !== null &&
-                              clickedId.endId !== null ? (
-                                <div
-                                  style={{
-                                    padding: '0 12px',
-                                    height: 30,
-                                    backgroundColor: '#ec4a57',
-                                    borderRadius: '0.5rem',
-                                  }}
-                                >
-                                  <p
-                                    style={{
-                                      position: 'relative',
-                                      top: '50%',
-                                      transform: 'translateY(-50%)',
-                                      fontSize: 16,
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      color: '#fff',
-                                    }}
-                                  >
-                                    전송중임다~~~
-                                  </p>
-                                </div>
-                              ) : undefined,
-                          },
-                        ]
+                          ]
+                        : [
+                            ...pendings
+                              ?.filter(
+                                (pending) =>
+                                  pending.startId === province.id &&
+                                  pending.amount > 0
+                              )
+                              .map(
+                                (pending): Relation => ({
+                                  targetId: `${pending.endId}`,
+                                  targetAnchor: 'middle',
+                                  sourceAnchor: 'middle',
+                                  style: {
+                                    strokeColor: users?.find(
+                                      (user) => user.uid === province.owner
+                                    )?.color,
+                                    strokeWidth: 4,
+                                    endShape: {
+                                      circle: {
+                                        radius: 1,
+                                        fillColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        strokeColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        strokeWidth: 0.01,
+                                      },
+                                    },
+                                  },
+                                  label: (
+                                    <div
+                                      style={{
+                                        padding: '0 12px',
+                                        minWidth: 125,
+                                        height: 30,
+                                        backgroundColor: users?.find(
+                                          (user) => user.uid === province.owner
+                                        )?.color,
+                                        borderRadius: '0.5rem',
+                                      }}
+                                    >
+                                      <p
+                                        style={{
+                                          position: 'relative',
+                                          top: '50%',
+                                          transform: 'translateY(-50%)',
+                                          fontSize: 16,
+                                          fontWeight: 600,
+                                          textAlign: 'center',
+                                          color: '#fff',
+                                        }}
+                                      >
+                                        {pending.amount} 만큼 이동중..
+                                      </p>
+                                    </div>
+                                  ),
+                                })
+                              ),
+                          ]
                       : undefined
                   }
                 >
@@ -205,15 +326,40 @@ function Game() {
                       cursor: 'pointer',
                     }}
                     onClick={() => {
-                      if (clickedId.startId === null) {
+                      if (
+                        clickedId.startId === null &&
+                        users?.length !== 0 &&
+                        province.owner !== null &&
+                        province.owner === socket.id
+                      ) {
                         setClickedId({
-                          ...clickedId,
                           startId: province.id,
+                          endId: null,
                         });
-                      } else if (clickedId.endId === null) {
+                      } else if (
+                        users?.length !== 0 &&
+                        province.owner !== null &&
+                        clickedId.startId === province.id
+                      ) {
                         setClickedId({
-                          ...clickedId,
+                          startId: null,
+                          endId: null,
+                        });
+                      } else if (
+                        clickedId.startId !== null &&
+                        clickedId.endId === null
+                      ) {
+                        setClickedId({
+                          startId: null,
+                          endId: null,
+                        });
+
+                        socket.emit('pending_start', {
+                          startId: clickedId.startId,
                           endId: province.id,
+                          amount: provinces.find(
+                            (province) => province.id === clickedId.startId
+                          )?.hp,
                         });
                       }
                     }}

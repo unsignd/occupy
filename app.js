@@ -17,6 +17,7 @@ let userDataArr = [];
 let pendingArr = [];
 const hexList = ['#009dff', '#3bb273', '#ff6f69', '#f2c800'];
 let provinceArr = [];
+const chatList = [];
 
 let winnerList = [];
 
@@ -166,6 +167,8 @@ io.on('connection', (socket) => {
     winnerData: winnerList,
   });
 
+  socket.emit('load_message', chatList);
+
   socket.on('disconnect', () => {
     if (
       userDataArr.findIndex((userData) => userData.uid === socket.id) !== -1
@@ -291,5 +294,14 @@ io.on('connection', (socket) => {
     ) {
       pendingArr.push(data);
     }
+  });
+
+  socket.on('send_message', ({ nickname, contents }) => {
+    chatList.push({
+      contents: `${nickname}: ${contents}`,
+      index: chatList.length,
+    });
+
+    io.sockets.emit('load_message', chatList);
   });
 });

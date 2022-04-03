@@ -4,6 +4,15 @@ const http = require('https').createServer(
   {
     cert: fs.readFileSync(__dirname + '/cert/cert.pem'),
     key: fs.readFileSync(__dirname + '/cert/cert.key'),
+    ciphers: [
+      'ECDHE-RSA-AES128-SHA256',
+      'DHE-RSA-AES128-SHA256',
+      'AES128-GCM-SHA256',
+      'RC4',
+      'HIGH',
+      '!MD5',
+      '!aNULL',
+    ].join(':'),
   },
   app
 );

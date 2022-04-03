@@ -49,6 +49,13 @@ function Game() {
     endId: null,
   });
   const [pendings, setPendings] = useState<Array<IPeding>>([]);
+  const [message, setMessage] = useState<string>();
+  const [msgList, setMsgList] = useState<
+    Array<{
+      contents: string;
+      index: number;
+    }>
+  >([]);
 
   useEffect(() => {
     socket.on(
@@ -92,6 +99,13 @@ function Game() {
       setIsAdmin(false);
       setIsJoined(false);
     });
+
+    socket.on(
+      'load_message',
+      (array: Array<{ contents: string; index: number }>) => {
+        setMsgList(array);
+      }
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -517,7 +531,7 @@ function Game() {
             color: '#010101',
           }}
           disabled={isJoined}
-        ></input>
+        />
         <button
           data-primary
           onClick={() => {
@@ -540,6 +554,66 @@ function Game() {
               : '게임에 참가했어요.'
             : '게임 참가하기'}
         </button>
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          width: '20vw',
+          height: '40vh',
+          top: '60vh',
+          backgroundColor: '#272727aa',
+          zIndex: 10,
+          borderRadius: '0 1rem 0 0',
+        }}
+      >
+        <div
+          style={{
+            height: 'calc(100% - 135px)',
+            width: 'calc(100% - 35px)',
+            marginTop: 10,
+            paddingBottom: 55,
+            marginBottom: 9,
+            marginLeft: 25,
+          }}
+        >
+          {msgList.map((msg) => (
+            <p
+              key={msg.index}
+              style={{
+                fontSize: 20,
+                fontWeight: 600,
+                color: '#fff',
+              }}
+            >
+              {msg.contents}
+            </p>
+          ))}
+        </div>
+        <input
+          placeholder="메시지를 입력하세요"
+          maxLength={22}
+          type="text"
+          onChange={(e) => {
+            setMessage(e.target.value);
+          }}
+          style={{
+            position: 'relative',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 'calc(100% - 80px)',
+            color: '#010101',
+            height: 40,
+            bottom: 10,
+          }}
+          onKeyPress={(e) => {
+            if (e.key === 'Enter' && message !== '') {
+              socket.emit('send_message', {
+                nickname: nickname,
+                contents: message,
+              });
+            }
+          }}
+        />
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
   cors: {
     origin: 'https://occupy.unsignd.me',
+    // origin: '*',
     methods: ['GET', 'POST'],
   },
 });
@@ -83,16 +84,6 @@ const decreaseHP = setInterval(() => {
             } else {
               endProvince.hp--;
             }
-
-            if (endProvince.hp < 0) {
-              endProvince.owner = startProvince.owner;
-              endProvince.type = undefined;
-              endProvince.hp = 0;
-            }
-
-            if (startProvince.hp < pending.amount) {
-              pending.amount = startProvince.hp;
-            }
           } else {
             if (endProvince.owner === startProvince.owner) {
               endProvince.hp++;
@@ -105,6 +96,16 @@ const decreaseHP = setInterval(() => {
                 endProvince.hp--;
               }
             }
+          }
+
+          if (endProvince.hp < 0) {
+            endProvince.owner = startProvince.owner;
+            endProvince.type = undefined;
+            endProvince.hp = 0;
+          }
+
+          if (startProvince.hp < pending.amount) {
+            pending.amount = startProvince.hp;
           }
         }
       }
@@ -210,7 +211,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join', (nickname) => {
-    if (
+    if (gameStarted) {
+      socket.emit('error_game_join', '이미 게임이 시작됐어요.');
+    } else if (
       userDataArr.length === 0 ||
       userDataArr.find((user) => user.uid === socket.id) === undefined
     ) {

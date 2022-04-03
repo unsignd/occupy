@@ -211,6 +211,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join', (nickname) => {
+    nickname = nickname.substring(0, 22);
     if (gameStarted) {
       socket.emit('error_game_join', '이미 게임이 시작됐어요.');
     } else if (

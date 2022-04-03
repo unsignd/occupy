@@ -3,8 +3,8 @@ import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 import './Game.css';
 
-// const socket = io('https://occupy-server.unsignd.me:443/');
-const socket = io('http://localhost:80');
+const socket = io('https://occupy-server.unsignd.me:443/');
+// const socket = io('http://localhost:80');
 
 function Game() {
   interface IProvince {

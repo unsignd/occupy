@@ -24,7 +24,7 @@ const io = require('socket.io')(http, {
   },
 });
 
-http.listen(443);
+http.listen(80);
 
 let adminUid;
 let gameStarted = false;

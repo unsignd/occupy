@@ -3,7 +3,8 @@ import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 import './Game.css';
 
-const socket = io('https://occupy-server.unsignd.me:443/');
+// const socket = io('https://occupy-server.unsignd.me:443/');
+const socket = io('http://localhost:80');
 
 function Game() {
   interface IProvince {
@@ -34,7 +35,7 @@ function Game() {
 
   const [provinces, setProvinces] = useState<Array<IProvince>>();
   const [users, setUsers] = useState<Array<IUser>>();
-  const [nickname, setNickname] = useState<string>();
+  const [nickname, setNickname] = useState<string>('occupier');
   const [isJoined, setIsJoined] = useState<boolean>(false);
   const [isStart, setIsStart] = useState<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -97,8 +98,8 @@ function Game() {
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
+        width: '100vw',
+        height: '100vh',
       }}
       onMouseMove={(e) => {
         setMousePos({
@@ -155,8 +156,8 @@ function Game() {
       <ArcherContainer
         strokeColor="#ec4a57"
         style={{
-          width: '100%',
-          height: '100%',
+          width: '100vw',
+          height: '100vh',
         }}
       >
         <ArcherElement id="mousePos">
@@ -184,8 +185,8 @@ function Game() {
               style={{
                 position: 'relative',
                 display: 'inline',
-                top: `${(province.id % 5) * 20}%`,
-                left: `calc(${province.x}% - 100px)`,
+                top: `calc(${province.y}% - ${(4 / 5) * province.y + 3}px)`,
+                left: `calc(${province.x}% - ${(8 / 5) * province.x + 20}px)`,
               }}
             >
               <div
@@ -376,128 +377,81 @@ function Game() {
                       : undefined
                   }
                 >
-                  {typeof province.type !== 'undefined' &&
-                  province.type === 'flag' ? (
-                    <i
-                      key={province.id}
-                      className="fa-solid fa-flag"
-                      style={{
-                        display: 'table',
-                        position: 'relative',
-                        top: 12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: 40,
-                        color:
-                          users?.length === 0 ||
-                          province.owner === null ||
-                          users?.find((user) => province.owner === user.uid) ===
-                            undefined
-                            ? '#616161'
-                            : users?.find((user) => province.owner === user.uid)
-                                ?.color,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => {
-                        if (
-                          clickedId.startId === null &&
-                          users?.length !== 0 &&
-                          province.owner !== null &&
-                          province.owner === socket.id
-                        ) {
-                          setClickedId({
-                            startId: province.id,
-                            endId: null,
-                          });
-                        } else if (
-                          users?.length !== 0 &&
-                          province.owner !== null &&
-                          clickedId.startId === province.id
-                        ) {
-                          setClickedId({
-                            startId: null,
-                            endId: null,
-                          });
-                        } else if (
-                          clickedId.startId !== null &&
-                          clickedId.endId === null
-                        ) {
-                          setClickedId({
-                            startId: null,
-                            endId: null,
-                          });
+                  <i
+                    key={province.id}
+                    className={
+                      typeof province.type !== 'undefined' &&
+                      province.type === 'flag'
+                        ? 'fa-solid fa-flag'
+                        : 'fa-brands fa-fort-awesome'
+                    }
+                    style={{
+                      display: 'table',
+                      position: 'relative',
+                      top:
+                        typeof province.type !== 'undefined' &&
+                        province.type === 'flag'
+                          ? 12
+                          : 8,
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      fontSize:
+                        typeof province.type !== 'undefined' &&
+                        province.type === 'flag'
+                          ? 40
+                          : 50,
+                      color:
+                        users?.length === 0 ||
+                        province.owner === null ||
+                        users?.find((user) => province.owner === user.uid) ===
+                          undefined
+                          ? '#616161'
+                          : users?.find((user) => province.owner === user.uid)
+                              ?.color,
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      if (
+                        clickedId.startId === null &&
+                        users?.length !== 0 &&
+                        province.owner !== null &&
+                        province.owner === socket.id
+                      ) {
+                        setClickedId({
+                          startId: province.id,
+                          endId: null,
+                        });
+                      } else if (
+                        users?.length !== 0 &&
+                        province.owner !== null &&
+                        clickedId.startId === province.id
+                      ) {
+                        setClickedId({
+                          startId: null,
+                          endId: null,
+                        });
+                      } else if (
+                        clickedId.startId !== null &&
+                        clickedId.endId === null &&
+                        (province.type !== 'flag' ||
+                          provinces.find((p) => p.id === clickedId.startId)
+                            ?.type !== 'flag')
+                      ) {
+                        setClickedId({
+                          startId: null,
+                          endId: null,
+                        });
 
-                          socket.emit('pending_start', {
-                            startId: clickedId.startId,
-                            endId: province.id,
-                            amount: provinces.find(
-                              (province) => province.id === clickedId.startId
-                            )?.hp,
-                          });
-                        }
-                      }}
-                    />
-                  ) : (
-                    <i
-                      key={province.id}
-                      className="fa-brands fa-fort-awesome"
-                      style={{
-                        display: 'table',
-                        position: 'relative',
-                        top: 12,
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        fontSize: 50,
-                        color:
-                          users?.length === 0 ||
-                          province.owner === null ||
-                          users?.find((user) => province.owner === user.uid) ===
-                            undefined
-                            ? '#616161'
-                            : users?.find((user) => province.owner === user.uid)
-                                ?.color,
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => {
-                        if (
-                          clickedId.startId === null &&
-                          users?.length !== 0 &&
-                          province.owner !== null &&
-                          province.owner === socket.id
-                        ) {
-                          setClickedId({
-                            startId: province.id,
-                            endId: null,
-                          });
-                        } else if (
-                          users?.length !== 0 &&
-                          province.owner !== null &&
-                          clickedId.startId === province.id
-                        ) {
-                          setClickedId({
-                            startId: null,
-                            endId: null,
-                          });
-                        } else if (
-                          clickedId.startId !== null &&
-                          clickedId.endId === null
-                        ) {
-                          setClickedId({
-                            startId: null,
-                            endId: null,
-                          });
-
-                          socket.emit('pending_start', {
-                            startId: clickedId.startId,
-                            endId: province.id,
-                            amount: provinces.find(
-                              (province) => province.id === clickedId.startId
-                            )?.hp,
-                          });
-                        }
-                      }}
-                    />
-                  )}
+                        socket.emit('pending_start', {
+                          startId: clickedId.startId,
+                          endId: province.id,
+                          amount: provinces.find(
+                            (province) => province.id === clickedId.startId
+                          )?.hp,
+                        });
+                      }
+                    }}
+                  />
                 </ArcherElement>
               </div>
             </div>
@@ -516,7 +470,7 @@ function Game() {
           zIndex: 4,
         }}
       >
-        현재 유저수: {users?.length}명
+        참가자 수: {users?.length}명 | v0.12
       </p>
       <div
         style={{
@@ -530,7 +484,9 @@ function Game() {
         <input
           placeholder="닉네임을 입력하세요"
           type="text"
-          onChange={(e) => setNickname(e.target.value)}
+          onChange={(e) =>
+            setNickname(e.target.value === '' ? 'occupier' : e.target.value)
+          }
           style={{
             borderRadius: '0.5rem 0 0 0.5rem',
             color: '#010101',

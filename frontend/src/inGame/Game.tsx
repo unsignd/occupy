@@ -113,7 +113,7 @@ function Game() {
           position: 'absolute',
           width: '100vw',
           height: '100vh',
-          zIndex: 3,
+          zIndex: 4,
           backgroundColor: '#000000',
           opacity: 0.85,
           display: isStart ? 'none' : 'block',
@@ -158,6 +158,7 @@ function Game() {
         style={{
           width: '100vw',
           height: '100vh',
+          zIndex: 3,
         }}
       >
         <ArcherElement id="mousePos">
@@ -377,38 +378,15 @@ function Game() {
                       : undefined
                   }
                 >
-                  <i
-                    key={province.id}
-                    className={
-                      typeof province.type !== 'undefined' &&
-                      province.type === 'flag'
-                        ? 'fa-solid fa-flag'
-                        : 'fa-brands fa-fort-awesome'
-                    }
+                  <div
                     style={{
+                      width: 50,
+                      height: 50,
                       display: 'table',
                       position: 'relative',
-                      top:
-                        typeof province.type !== 'undefined' &&
-                        province.type === 'flag'
-                          ? 12
-                          : 8,
+                      top: 0,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      fontSize:
-                        typeof province.type !== 'undefined' &&
-                        province.type === 'flag'
-                          ? 40
-                          : 50,
-                      color:
-                        users?.length === 0 ||
-                        province.owner === null ||
-                        users?.find((user) => province.owner === user.uid) ===
-                          undefined
-                          ? '#616161'
-                          : users?.find((user) => province.owner === user.uid)
-                              ?.color,
-                      cursor: 'pointer',
                     }}
                     onClick={() => {
                       if (
@@ -451,7 +429,53 @@ function Game() {
                         });
                       }
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: 50,
+                        height: 50,
+                        backgroundColor: '#00000000',
+                        cursor: 'pointer',
+                        zIndex: 4,
+                        top:
+                          typeof province.type !== 'undefined' &&
+                          province.type === 'flag'
+                            ? 8
+                            : 8,
+                      }}
+                    />
+                    <i
+                      key={province.id}
+                      className={
+                        typeof province.type !== 'undefined' &&
+                        province.type === 'flag'
+                          ? 'fa-solid fa-flag'
+                          : 'fa-brands fa-fort-awesome'
+                      }
+                      style={{
+                        fontSize:
+                          typeof province.type !== 'undefined' &&
+                          province.type === 'flag'
+                            ? 40
+                            : 50,
+                        color:
+                          users?.length === 0 ||
+                          province.owner === null ||
+                          users?.find((user) => province.owner === user.uid) ===
+                            undefined
+                            ? '#616161'
+                            : users?.find((user) => province.owner === user.uid)
+                                ?.color,
+                        position: 'relative',
+                        top:
+                          typeof province.type !== 'undefined' &&
+                          province.type === 'flag'
+                            ? -34
+                            : -42,
+                      }}
+                    />
+                  </div>
                 </ArcherElement>
               </div>
             </div>
@@ -467,7 +491,7 @@ function Game() {
           fontSize: 16,
           fontWeight: 500,
           color: '#007bff',
-          zIndex: 4,
+          zIndex: 5,
         }}
       >
         참가자 수: {users?.length}명 | v0.13
@@ -478,11 +502,12 @@ function Game() {
           left: '50%',
           bottom: 'calc(5% + 10px)',
           transform: 'translateX(-50%)',
-          zIndex: 4,
+          zIndex: 5,
         }}
       >
         <input
           placeholder="닉네임을 입력하세요"
+          maxLength={22}
           type="text"
           onChange={(e) =>
             setNickname(e.target.value === '' ? 'occupier' : e.target.value)

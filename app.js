@@ -2,7 +2,8 @@ const app = require('express')();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
   cors: {
-    origin: 'https://occupy.unsignd.me',
+    // origin: 'https://occupy.unsignd.me',
+    origin: '*',
     methods: ['GET', 'POST'],
   },
 });
@@ -11,21 +12,24 @@ http.listen(80);
 
 let adminUid;
 let gameStarted = false;
+let checkActive = true;
 let userDataArr = [];
 let pendingArr = [];
-const hexList = ['#009dff', '#3bb273', '#ff6f69', '#5344a9', '#f2c800'];
+const hexList = ['#009dff', '#3bb273', '#ff6f69', '#f2c800'];
 let provinceArr = [];
 
 let winnerList = [];
 
-for (let i = 0; i < 5; i++) {
-  provinceArr.push({
-    owner: null,
-    hp: 100,
-    id: i,
-    x: Math.floor(Math.random() * 101),
-    y: Math.floor(Math.random() * 101),
-  });
+for (let j = 0; j < 5; j++) {
+  for (let i = 0; i < 5; i++) {
+    provinceArr.push({
+      owner: null,
+      hp: 100,
+      id: j * 10 + i,
+      x: i * 25,
+      y: j * 25,
+    });
+  }
 }
 
 const increaseHP = setInterval(() => {
@@ -35,13 +39,13 @@ const increaseHP = setInterval(() => {
 
       if (typeof province.type !== 'undefined' && province.type === 'flag') {
         if (province.hp < 200) {
-          province.hp += 5;
+          province.hp += 2;
         } else if (province.hp >= 200) {
           province.hp = 200;
         }
       } else {
         if (province.hp < 100) {
-          province.hp++;
+          province.hp += 1;
         } else if (province.hp >= 100) {
           province.hp = 100;
         }
@@ -74,48 +78,69 @@ const decreaseHP = setInterval(() => {
           pending.amount--;
           startProvince.hp--;
 
-          if (endProvince.owner === startProvince.owner) {
-            endProvince.hp++;
+          if (endProvince.type !== 'flag') {
+            if (endProvince.owner === startProvince.owner) {
+              endProvince.hp++;
+            } else {
+              endProvince.hp--;
+            }
+
+            if (endProvince.hp < 0) {
+              endProvince.owner = startProvince.owner;
+              endProvince.type = undefined;
+              endProvince.hp = 0;
+            }
+
+            if (startProvince.hp < pending.amount) {
+              pending.amount = startProvince.hp;
+            }
           } else {
-            endProvince.hp--;
-          }
-
-          if (endProvince.hp < 0) {
-            endProvince.owner = startProvince.owner;
-            endProvince.type = undefined;
-            endProvince.hp = 0;
-          }
-
-          if (startProvince.hp < pending.amount) {
-            pending.amount = startProvince.hp;
+            if (endProvince.owner === startProvince.owner) {
+              endProvince.hp++;
+            } else {
+              if (
+                pendingArr.filter(
+                  (p) => p.amount > 0 && p.endId === endProvince.id
+                ).length >= 2
+              ) {
+                endProvince.hp--;
+              }
+            }
           }
         }
       }
     });
   }
+}, 100);
 
+const checkGameEnd = setInterval(() => {
   userDataArr.forEach((user) => {
     if (
       provinceArr.filter(
         (province) => province.owner === user.uid || province.owner === null
       ).length === provinceArr.length &&
-      gameStarted
+      gameStarted &&
+      checkActive
     ) {
+      checkActive = false;
       setTimeout(() => {
         gameStarted = false;
+        checkActive = true;
         pendingArr = [];
         provinceArr = [];
         adminUid = undefined;
         userDataArr = [];
 
-        for (let i = 0; i < 5; i++) {
-          provinceArr.push({
-            owner: null,
-            hp: 100,
-            id: i,
-            x: Math.floor(Math.random() * 101),
-            y: Math.floor(Math.random() * 101),
-          });
+        for (let j = 0; j < 5; j++) {
+          for (let i = 0; i < 5; i++) {
+            provinceArr.push({
+              owner: null,
+              hp: 100,
+              id: j * 10 + i,
+              x: i * 25,
+              y: j * 25,
+            });
+          }
         }
         winnerList.push(user);
         io.sockets.emit('game_end');
@@ -163,14 +188,16 @@ io.on('connection', (socket) => {
           provinceArr = [];
           adminUid = undefined;
 
-          for (let i = 0; i < 5; i++) {
-            provinceArr.push({
-              owner: null,
-              hp: 100,
-              id: i,
-              x: Math.floor(Math.random() * 101),
-              y: Math.floor(Math.random() * 101),
-            });
+          for (let j = 0; j < 5; j++) {
+            for (let i = 0; i < 5; i++) {
+              provinceArr.push({
+                owner: null,
+                hp: 100,
+                id: j * 10 + i,
+                x: i * 25,
+                y: j * 25,
+              });
+            }
           }
           io.sockets.emit('game_end');
         }, 1000);
@@ -188,10 +215,8 @@ io.on('connection', (socket) => {
       userDataArr.length === 0 ||
       userDataArr.find((user) => user.uid === socket.id) === undefined
     ) {
-      if (
-        provinceArr.filter((province) => province.owner === null).length === 0
-      ) {
-        socket.emit('error_game_join', '게임에 빈 자리가 없어요.');
+      if (userDataArr.length === 8) {
+        socket.emit('error_game_join', '게임의 최대 인원은 8명이예요.');
       } else {
         hexList.sort(
           (prev, curr) =>
@@ -204,19 +229,21 @@ io.on('connection', (socket) => {
           uid: socket.id,
           color: hexList[0],
         });
-        provinceArr.find((province) => province.owner === null).type = 'flag';
-        provinceArr.find(
+        provinceIndex = provinceArr.findIndex(
           (province) =>
             province.owner === null &&
-            typeof province.type !== 'undefined' &&
-            province.type === 'flag'
-        ).hp = 200;
-        provinceArr.find(
-          (province) =>
-            province.owner === null &&
-            typeof province.type !== 'undefined' &&
-            province.type === 'flag'
-        ).owner = socket.id;
+            (province.id === 0 ||
+              province.id === 2 ||
+              province.id === 4 ||
+              province.id === 20 ||
+              province.id === 24 ||
+              province.id === 40 ||
+              province.id === 42 ||
+              province.id === 44)
+        );
+        provinceArr[provinceIndex].type = 'flag';
+        provinceArr[provinceIndex].hp = 200;
+        provinceArr[provinceIndex].owner = socket.id;
 
         socket.emit('load_data', {
           userData: userDataArr,
@@ -236,10 +263,17 @@ io.on('connection', (socket) => {
 
   socket.on('game_start', () => {
     if (socket.id === adminUid && !gameStarted) {
-      gameStarted = true;
-      io.sockets.emit('success_game_start');
+      if (userDataArr.length >= 2) {
+        gameStarted = true;
+        io.sockets.emit('success_game_start');
+      } else {
+        socket.emit('error_game_start', '게임 최소 인원은 2명이예요.');
+      }
     } else {
-      socket.emit('error_game_start', '게임을 시작할 수 없어요.');
+      socket.emit(
+        'error_game_start',
+        `error_game_start: ${adminUid === socket.id}, ${!gameStarted}`
+      );
     }
   });
 

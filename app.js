@@ -1,5 +1,12 @@
+const fs = require('fs');
 const app = require('express')();
-const http = require('http').createServer(app);
+const http = require('https').createServer(
+  {
+    cert: fs.readFileSync(__dirname + '/cert/cert.pem'),
+    key: fs.readFileSync(__dirname + '/cert/cert.key'),
+  },
+  app
+);
 const io = require('socket.io')(http, {
   cors: {
     origin: 'https://occupy.unsignd.me/',
@@ -7,7 +14,7 @@ const io = require('socket.io')(http, {
   },
 });
 
-http.listen(80);
+http.listen(443);
 
 let adminUid;
 let gameStarted = false;

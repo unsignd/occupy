@@ -252,7 +252,6 @@ io.on('connection', (socket) => {
         });
 
       if (gameStarted && userDataArr.length === 0) {
-        setTimeout(() => {
           gameStarted = false;
           pendingArr = [];
           provinceArr = [];
@@ -269,8 +268,11 @@ io.on('connection', (socket) => {
               });
             }
           }
+
+          chatList = [];
+
+          io.sockets.emit('load_message', chatList);
           io.sockets.emit('game_end');
-        }, 3000);
       }
 
       if (socket.id === adminUid && userDataArr.length !== 0) {

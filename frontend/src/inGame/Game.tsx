@@ -48,7 +48,7 @@ function Game() {
     endId: null,
   });
   const [pendings, setPendings] = useState<Array<IPeding>>([]);
-  const [message, setMessage] = useState<string>();
+  const [message, setMessage] = useState<string>('');
   const [msgList, setMsgList] = useState<
     Array<{
       contents: string;
@@ -104,6 +104,9 @@ function Game() {
       'load_message',
       (array: Array<{ contents: string; index: number; color: string }>) => {
         setMsgList(array);
+
+        document.getElementById('bottom')!.scrollTop =
+          document.getElementById('bottom')!.scrollHeight;
       }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -427,7 +430,12 @@ function Game() {
                         clickedId.endId === null &&
                         (province.type !== 'flag' ||
                           provinces.find((p) => p.id === clickedId.startId)
-                            ?.type !== 'flag')
+                            ?.type !== 'flag') &&
+                        users?.length !== 0 &&
+                        pendings.find(
+                          (pending) =>
+                            pending.endId === province.id && pending.amount > 0
+                        ) === undefined
                       ) {
                         setClickedId({
                           startId: null,
@@ -440,6 +448,36 @@ function Game() {
                           amount: provinces.find(
                             (province) => province.id === clickedId.startId
                           )?.hp,
+                        });
+                      } else if (
+                        clickedId.startId !== null &&
+                        clickedId.endId === null &&
+                        (province.type !== 'flag' ||
+                          provinces.find((p) => p.id === clickedId.startId)
+                            ?.type !== 'flag') &&
+                        users?.length !== 0 &&
+                        pendings.find(
+                          (pending) =>
+                            pending.endId === province.id &&
+                            pending.amount > 0 &&
+                            (provinces.find(
+                              (province) => province.id === pending.startId
+                            )?.owner === null ||
+                              provinces.find(
+                                (province) => province.id === pending.startId
+                              )?.owner === socket.id)
+                        ) !== undefined
+                      ) {
+                        setClickedId({
+                          startId: null,
+                          endId: null,
+                        });
+
+                        socket.emit('clear_pending', {
+                          startId: pendings.find(
+                            (pending) => pending.endId === province.id
+                          )?.startId,
+                          endId: province.id,
                         });
                       }
                     }}
@@ -508,7 +546,7 @@ function Game() {
           zIndex: 5,
         }}
       >
-        참가자 수: {users?.length}명 | v0.15
+        참가자 수: {users?.length}명 | v0.50
       </p>
       <div
         style={{
@@ -557,7 +595,7 @@ function Game() {
       </div>
       <div
         style={{
-          position: 'absolute',
+          position: 'fixed',
           width: '18vw',
           height: '40vh',
           top: '60vh',
@@ -568,6 +606,7 @@ function Game() {
       >
         <div
           className="chat_box"
+          id="bottom"
           style={{
             height: 'calc(100% - 110px)',
             width: 'calc(100% - 35px)',
@@ -586,6 +625,7 @@ function Game() {
                 marginTop: 5,
               }}
             >
+              key={msg.index}
               {msg.contents}
             </p>
           ))}

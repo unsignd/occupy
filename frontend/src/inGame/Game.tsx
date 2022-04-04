@@ -3,7 +3,7 @@ import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 
 const socket = io('https://occupy-server.unsignd.me:443/');
-// const socket = io('http://localhost:80');
+// const socket = io('http://localhost:3001');
 
 function Game() {
   interface IProvince {
@@ -431,54 +431,43 @@ function Game() {
                         (province.type !== 'flag' ||
                           provinces.find((p) => p.id === clickedId.startId)
                             ?.type !== 'flag') &&
-                        users?.length !== 0 &&
-                        pendings.find(
-                          (pending) =>
-                            pending.endId === province.id && pending.amount > 0
-                        ) === undefined
+                        users?.length !== 0
                       ) {
                         setClickedId({
                           startId: null,
                           endId: null,
                         });
 
-                        socket.emit('pending_start', {
-                          startId: clickedId.startId,
-                          endId: province.id,
-                          amount: provinces.find(
-                            (province) => province.id === clickedId.startId
-                          )?.hp,
-                        });
-                      } else if (
-                        clickedId.startId !== null &&
-                        clickedId.endId === null &&
-                        (province.type !== 'flag' ||
-                          provinces.find((p) => p.id === clickedId.startId)
-                            ?.type !== 'flag') &&
-                        users?.length !== 0 &&
-                        pendings.find(
-                          (pending) =>
-                            pending.endId === province.id &&
-                            pending.amount > 0 &&
-                            (provinces.find(
-                              (province) => province.id === pending.startId
-                            )?.owner === null ||
+                        if (
+                          pendings.find(
+                            (pending) =>
                               provinces.find(
                                 (province) => province.id === pending.startId
-                              )?.owner === socket.id)
-                        ) !== undefined
-                      ) {
-                        setClickedId({
-                          startId: null,
-                          endId: null,
-                        });
-
-                        socket.emit('clear_pending', {
-                          startId: pendings.find(
-                            (pending) => pending.endId === province.id
-                          )?.startId,
-                          endId: province.id,
-                        });
+                              )?.owner === socket.id &&
+                              pending.endId === province.id &&
+                              pending.amount > 0
+                          ) !== undefined
+                        ) {
+                          socket.emit('clear_pending', {
+                            startId: pendings.find(
+                              (pending) =>
+                                provinces.find(
+                                  (province) => province.id === pending.startId
+                                )?.owner === socket.id &&
+                                pending.endId === province.id &&
+                                pending.amount > 0
+                            )?.startId,
+                            endId: province.id,
+                          });
+                        } else {
+                          socket.emit('pending_start', {
+                            startId: clickedId.startId,
+                            endId: province.id,
+                            amount: provinces.find(
+                              (province) => province.id === clickedId.startId
+                            )?.hp,
+                          });
+                        }
                       }
                     }}
                   >
@@ -546,7 +535,7 @@ function Game() {
           zIndex: 5,
         }}
       >
-        참가자 수: {users?.length}명 | v0.50
+        참가자 수: {users?.length}명 | v0.51
       </p>
       <div
         style={{
@@ -625,7 +614,6 @@ function Game() {
                 marginTop: 5,
               }}
             >
-              key={msg.index}
               {msg.contents}
             </p>
           ))}

@@ -134,6 +134,7 @@ const checkGameEnd = setInterval(() => {
       setTimeout(() => {
         gameStarted = false;
         checkActive = true;
+        timeout = 0;
         pendingArr = [];
         provinceArr = [];
         adminUid = undefined;
@@ -277,6 +278,7 @@ io.on('connection', (socket) => {
         pendingArr = [];
         provinceArr = [];
         adminUid = undefined;
+        timeout = 0;
 
         for (let j = 0; j < 5; j++) {
           for (let i = 0; i < 5; i++) {

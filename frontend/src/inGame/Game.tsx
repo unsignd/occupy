@@ -445,6 +445,7 @@ function Game() {
                                 (province) => province.id === pending.startId
                               )?.owner === socket.id &&
                               pending.endId === province.id &&
+                              pending.startId === clickedId.startId &&
                               pending.amount > 0
                           ) !== undefined
                         ) {

@@ -13,11 +13,12 @@ http.listen(80);
 let adminUid;
 let gameStarted = false;
 let checkActive = true;
+let timeout = 0;
 let userDataArr = [];
 let pendingArr = [];
 const hexList = ['#009dff', '#3bb273', '#ff6f69', '#f2c800'];
 let provinceArr = [];
-const chatList = [];
+let chatList = [];
 
 let winnerList = [];
 
@@ -34,26 +35,30 @@ for (let j = 0; j < 5; j++) {
 }
 
 const increaseHP = setInterval(() => {
-  if (gameStarted) {
+  if (gameStarted && timeout > 180) {
     provinceArr.forEach((province) => {
       province.hp = province.hp < 0 ? 0 : province.hp;
 
       if (typeof province.type !== 'undefined' && province.type === 'flag') {
         if (province.hp < 200) {
           province.hp += 2;
-        } else if (province.hp >= 200) {
-          province.hp = 200;
         }
       } else {
         if (province.hp < 100) {
           province.hp += 1;
-        } else if (province.hp >= 100) {
-          province.hp = 100;
         }
       }
     });
   }
 }, 1000);
+
+const gameEnd = setInterval(() => {
+  if (gameStarted && timeout === 0) {
+    provinceArr.forEach((province) => {
+      province.hp--;
+    });
+  }
+}, 10);
 
 const decreaseHP = setInterval(() => {
   if (gameStarted) {
@@ -81,13 +86,15 @@ const decreaseHP = setInterval(() => {
 
           if (endProvince.type !== 'flag') {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp++;
+              endProvince.hp += 2;
+              startProvince.hp--;
             } else {
               endProvince.hp--;
             }
           } else {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp++;
+              endProvince.hp += 2;
+              startProvince.hp--;
             } else {
               if (
                 pendingArr.filter(
@@ -144,11 +151,73 @@ const checkGameEnd = setInterval(() => {
           }
         }
         winnerList.push(user);
+        chatList.push(
+          {
+            contents: `제 ${winnerList.length}회 게임이 끝났습니다!`,
+            id: 0,
+            color: '#fed501',
+          },
+          {
+            contents: `우승자는 ${user.name}님입니다!`,
+            id: 1,
+            color: '#fed501',
+          }
+        );
+        io.sockets.emit('load_message', chatList);
         io.sockets.emit('game_end');
       }, 3000);
     }
   });
 }, 100);
+
+const checkTimeout = setInterval(() => {
+  if (timeout > 0 && gameStarted) {
+    timeout--;
+    if (timeout === 240) {
+      chatList.push({
+        contents: `60초 후 모든 성의 체력이 회복되지 않습니다!`,
+        id: 0,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+    } else if (timeout === 180) {
+      chatList.push({
+        contents: `이제부터 모든 성의 체력이 회복되지 않습니다!`,
+        id: 0,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+    } else if (timeout === 60) {
+      chatList.push({
+        contents: `60초 후 게임이 종료됩니다!`,
+        id: 0,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+    } else if (timeout === 30) {
+      chatList.push({
+        contents: `30초 후 게임이 종료됩니다!`,
+        id: 0,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+    } else if (timeout <= 10) {
+      chatList.push({
+        contents: `${timeout}초 후 게임이 종료됩니다!`,
+        id: 0,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+    }
+  } else if (timeout === 0 && gameStarted) {
+    chatList.push({
+      contents: `한 팀의 성만이 남을 때까지 성의 군사력이 감소합니다!`,
+      id: 0,
+      color: '#fed501',
+    });
+    io.sockets.emit('load_message', chatList);
+  }
+}, 1000);
 
 io.on('connection', (socket) => {
   setInterval(() => {
@@ -203,7 +272,7 @@ io.on('connection', (socket) => {
             }
           }
           io.sockets.emit('game_end');
-        }, 1000);
+        }, 3000);
       }
 
       if (socket.id === adminUid && userDataArr.length !== 0) {
@@ -271,6 +340,15 @@ io.on('connection', (socket) => {
     if (socket.id === adminUid && !gameStarted) {
       if (userDataArr.length >= 2) {
         gameStarted = true;
+        chatList = [
+          {
+            contents: `제 ${winnerList.length + 1}회 게임이 시작되었습니다!`,
+            id: 0,
+            color: '#fed501',
+          },
+        ];
+        timeout = 600;
+        io.sockets.emit('load_message', chatList);
         io.sockets.emit('success_game_start');
       } else {
         socket.emit('error_game_start', '게임 최소 인원은 2명이예요.');
@@ -298,8 +376,9 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', ({ nickname, contents }) => {
     chatList.push({
-      contents: `${nickname}: ${contents}`,
+      contents: `${nickname}: ${contents.substring(0, 30)}`,
       index: chatList.length,
+      color: '#fff',
     });
 
     io.sockets.emit('load_message', chatList);

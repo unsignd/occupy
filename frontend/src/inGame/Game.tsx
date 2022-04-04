@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 
-const socket = io('https://occupy-server.unsignd.me:443/');
+const socket = io('https://occupy-server.unsignd.me:443');
 // const socket = io('http://localhost:3001');
 
 function Game() {

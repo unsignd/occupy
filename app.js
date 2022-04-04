@@ -86,15 +86,13 @@ const decreaseHP = setInterval(() => {
 
           if (endProvince.type !== 'flag') {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp += 2;
-              startProvince.hp--;
+              endProvince.hp++;
             } else {
               endProvince.hp--;
             }
           } else {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp += 2;
-              startProvince.hp--;
+              endProvince.hp++;
             } else {
               if (
                 pendingArr.filter(

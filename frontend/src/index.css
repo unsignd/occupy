@@ -61,3 +61,13 @@ button[data-primary]:disabled {
 svg {
   z-index: 1;
 }
+
+.chat_box {
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.chat_box::-webkit-scrollbar {
+  display: none;
+}

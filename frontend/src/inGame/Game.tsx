@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
-import './Game.css';
 
 const socket = io('https://occupy-server.unsignd.me:443/');
 // const socket = io('http://localhost:80');
@@ -54,6 +53,7 @@ function Game() {
     Array<{
       contents: string;
       index: number;
+      color: string;
     }>
   >([]);
 
@@ -102,7 +102,7 @@ function Game() {
 
     socket.on(
       'load_message',
-      (array: Array<{ contents: string; index: number }>) => {
+      (array: Array<{ contents: string; index: number; color: string }>) => {
         setMsgList(array);
       }
     );
@@ -161,7 +161,7 @@ function Game() {
               ? 'ㅤ'
               : winnerList?.length === 0
               ? '첫번째 우승자에 도전해보세요!'
-              : `${winnerList?.length}회 게임에서 ${
+              : `제 ${winnerList?.length}회 게임에서 ${
                   winnerList[winnerList.length - 1].name
                 }님 우승!`}
           </span>
@@ -508,7 +508,7 @@ function Game() {
           zIndex: 5,
         }}
       >
-        참가자 수: {users?.length}명 | v0.13
+        참가자 수: {users?.length}명 | v0.15
       </p>
       <div
         style={{
@@ -558,7 +558,7 @@ function Game() {
       <div
         style={{
           position: 'absolute',
-          width: '20vw',
+          width: '18vw',
           height: '40vh',
           top: '60vh',
           backgroundColor: '#272727aa',
@@ -567,11 +567,11 @@ function Game() {
         }}
       >
         <div
+          className="chat_box"
           style={{
-            height: 'calc(100% - 135px)',
+            height: 'calc(100% - 110px)',
             width: 'calc(100% - 35px)',
-            marginTop: 10,
-            paddingBottom: 55,
+            marginTop: 15,
             marginBottom: 9,
             marginLeft: 25,
           }}
@@ -580,9 +580,10 @@ function Game() {
             <p
               key={msg.index}
               style={{
-                fontSize: 20,
-                fontWeight: 600,
-                color: '#fff',
+                fontSize: 18,
+                fontWeight: 500,
+                color: msg.color,
+                marginTop: 5,
               }}
             >
               {msg.contents}
@@ -591,19 +592,21 @@ function Game() {
         </div>
         <input
           placeholder="메시지를 입력하세요"
-          maxLength={22}
+          maxLength={30}
           type="text"
           onChange={(e) => {
             setMessage(e.target.value);
           }}
+          value={message}
           style={{
             position: 'relative',
             left: '50%',
             transform: 'translateX(-50%)',
             width: 'calc(100% - 80px)',
             color: '#010101',
-            height: 40,
+            height: 35,
             bottom: 10,
+            marginTop: 25,
           }}
           onKeyPress={(e) => {
             if (e.key === 'Enter' && message !== '') {
@@ -611,6 +614,8 @@ function Game() {
                 nickname: nickname,
                 contents: message,
               });
+
+              setMessage('');
             }
           }}
         />

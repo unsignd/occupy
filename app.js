@@ -86,13 +86,15 @@ const decreaseHP = setInterval(() => {
 
           if (endProvince.type !== 'flag') {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp++;
+              pending.amount--;
+              endProvince.hp += 2;
             } else {
               endProvince.hp--;
             }
           } else {
             if (endProvince.owner === startProvince.owner) {
-              endProvince.hp++;
+              pending.amount--;
+              endProvince.hp += 2;
             } else {
               if (
                 pendingArr.filter(
@@ -152,12 +154,12 @@ const checkGameEnd = setInterval(() => {
         chatList.push(
           {
             contents: `제 ${winnerList.length}회 게임이 끝났습니다!`,
-            id: 0,
+            index: chatList.length,
             color: '#fed501',
           },
           {
             contents: `우승자는 ${user.name}님입니다!`,
-            id: 1,
+            index: chatList.length + 1,
             color: '#fed501',
           }
         );
@@ -174,35 +176,35 @@ const checkTimeout = setInterval(() => {
     if (timeout === 240) {
       chatList.push({
         contents: `60초 후 모든 성의 체력이 회복되지 않습니다!`,
-        id: 0,
+        index: chatList.length,
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
     } else if (timeout === 180) {
       chatList.push({
         contents: `이제부터 모든 성의 체력이 회복되지 않습니다!`,
-        id: 0,
+        index: chatList.length,
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
     } else if (timeout === 60) {
       chatList.push({
         contents: `60초 후 게임이 종료됩니다!`,
-        id: 0,
+        index: chatList.length,
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
     } else if (timeout === 30) {
       chatList.push({
         contents: `30초 후 게임이 종료됩니다!`,
-        id: 0,
+        index: chatList.length,
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
     } else if (timeout <= 10) {
       chatList.push({
         contents: `${timeout}초 후 게임이 종료됩니다!`,
-        id: 0,
+        index: chatList.length,
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
@@ -210,7 +212,7 @@ const checkTimeout = setInterval(() => {
   } else if (timeout === 0 && gameStarted) {
     chatList.push({
       contents: `한 팀의 성만이 남을 때까지 성의 군사력이 감소합니다!`,
-      id: 0,
+      index: chatList.length,
       color: '#fed501',
     });
     io.sockets.emit('load_message', chatList);
@@ -240,39 +242,58 @@ io.on('connection', (socket) => {
     if (
       userDataArr.findIndex((userData) => userData.uid === socket.id) !== -1
     ) {
+      chatList.push({
+        contents: `${
+          userDataArr.find((userData) => userData.uid === socket.id).name
+        }님이 게임에서 떠났습니다.`,
+        index: chatList.length,
+        color: '#fed501',
+      });
+      io.sockets.emit('load_message', chatList);
+
       userDataArr.splice(
         userDataArr.findIndex((userData) => userData.uid === socket.id),
         1
       );
+
       provinceArr
         .filter((province) => province.owner === socket.id)
         .forEach((province) => {
+          pendingArr
+            .filter((pending) => pending.startId === province.id)
+            .forEach((p) => {
+              p.amount = 0;
+            });
+
           province.type = undefined;
           province.owner = null;
+          if (province.hp > 100) {
+            province.hp = 100;
+          }
         });
 
       if (gameStarted && userDataArr.length === 0) {
-          gameStarted = false;
-          pendingArr = [];
-          provinceArr = [];
-          adminUid = undefined;
+        gameStarted = false;
+        pendingArr = [];
+        provinceArr = [];
+        adminUid = undefined;
 
-          for (let j = 0; j < 5; j++) {
-            for (let i = 0; i < 5; i++) {
-              provinceArr.push({
-                owner: null,
-                hp: 100,
-                id: j * 10 + i,
-                x: i * 25,
-                y: j * 25,
-              });
-            }
+        for (let j = 0; j < 5; j++) {
+          for (let i = 0; i < 5; i++) {
+            provinceArr.push({
+              owner: null,
+              hp: 100,
+              id: j * 10 + i,
+              x: i * 25,
+              y: j * 25,
+            });
           }
+        }
 
-          chatList = [];
+        chatList = [];
 
-          io.sockets.emit('load_message', chatList);
-          io.sockets.emit('game_end');
+        io.sockets.emit('load_message', chatList);
+        io.sockets.emit('game_end');
       }
 
       if (socket.id === adminUid && userDataArr.length !== 0) {
@@ -329,6 +350,12 @@ io.on('connection', (socket) => {
           adminUid = socket.id;
         }
 
+        chatList.push({
+          contents: `${nickname}님이 게임에 참가했습니다.`,
+          index: chatList.length,
+          color: '#fed501',
+        });
+        io.sockets.emit('load_message', chatList);
         socket.emit('success_game_join', userDataArr.length === 1);
       }
     } else {
@@ -382,5 +409,16 @@ io.on('connection', (socket) => {
     });
 
     io.sockets.emit('load_message', chatList);
+  });
+
+  socket.on('clear_pending', ({ startId, endId }) => {
+    if (gameStarted) {
+      pendingArr.find(
+        (pending) =>
+          pending.startId === startId &&
+          pending.endId === endId &&
+          pending.amount > 0
+      ).amount = 0;
+    }
   });
 });

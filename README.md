@@ -1,2 +1,2 @@
 # occupy
-the online occupy game
+the online occupation game based on react typescript.

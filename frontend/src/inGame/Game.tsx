@@ -547,7 +547,7 @@ function Game() {
           zIndex: 5,
         }}
       >
-        참가자 수: {users?.length}명 | v0.9
+        참가자 수: {users?.length}명 | v0.92
       </p>
       <div
         style={{

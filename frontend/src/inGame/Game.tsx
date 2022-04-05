@@ -3,7 +3,7 @@ import { ArcherContainer, ArcherElement, Relation } from 'react-archer';
 import io from 'socket.io-client';
 
 const socket = io('https://occupy-server.unsignd.me:443');
-// const socket = io('http://localhost:3001');
+// const socket = io('http://localhost:80');
 
 function Game() {
   interface IProvince {
@@ -480,26 +480,32 @@ function Game() {
                         backgroundColor: '#00000000',
                         cursor: 'pointer',
                         zIndex: 4,
-                        top:
-                          typeof province.type !== 'undefined' &&
-                          province.type === 'flag'
-                            ? 8
-                            : 8,
+                        top: 8,
                       }}
                     />
                     <i
                       key={province.id}
                       className={
-                        typeof province.type !== 'undefined' &&
                         province.type === 'flag'
                           ? 'fa-solid fa-flag'
+                          : province.type === 'military'
+                          ? 'fa-solid fa-person-rifle'
+                          : province.type === 'farm'
+                          ? 'fa-solid fa-tractor'
+                          : province.type === 'road'
+                          ? 'fa-solid fa-road'
                           : 'fa-brands fa-fort-awesome'
                       }
                       style={{
                         fontSize:
-                          typeof province.type !== 'undefined' &&
                           province.type === 'flag'
                             ? 40
+                            : province.type === 'military'
+                            ? 46
+                            : province.type === 'farm'
+                            ? 44
+                            : province.type === 'road'
+                            ? 48
                             : 50,
                         color:
                           users?.length === 0 ||
@@ -511,9 +517,14 @@ function Game() {
                                 ?.color,
                         position: 'relative',
                         top:
-                          typeof province.type !== 'undefined' &&
                           province.type === 'flag'
                             ? -34
+                            : province.type === 'military'
+                            ? -37
+                            : province.type === 'farm'
+                            ? -35
+                            : province.type === 'road'
+                            ? -36
                             : -42,
                       }}
                     />
@@ -536,7 +547,7 @@ function Game() {
           zIndex: 5,
         }}
       >
-        참가자 수: {users?.length}명 | v0.51
+        참가자 수: {users?.length}명 | v0.9
       </p>
       <div
         style={{
@@ -589,9 +600,9 @@ function Game() {
           width: '18vw',
           height: '40vh',
           top: '60vh',
-          backgroundColor: '#272727aa',
+          backgroundColor: '#272727c6',
           zIndex: 10,
-          borderRadius: '0 1rem 0 0',
+          borderRadius: '0 0.5rem 0 0',
         }}
       >
         <div
@@ -649,6 +660,30 @@ function Game() {
           }}
         />
       </div>
+      <button
+        style={{
+          position: 'absolute',
+          top: 'calc(100vh - 79px)',
+          left: 'calc(100vw - 70px)',
+          zIndex: 10,
+          padding: 0,
+          width: 45,
+          height: 45,
+        }}
+        data-primary
+        title="주의: 코드더러움"
+        onClick={() => {
+          window.open('https://github.com/unsignd/occupy', '_blank');
+        }}
+      >
+        <i
+          className="fa-brands fa-github"
+          style={{
+            color: '#fff',
+            fontSize: 28,
+          }}
+        />
+      </button>
     </div>
   );
 }

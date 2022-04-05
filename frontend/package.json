@@ -16,6 +16,7 @@
     "react-archer": "^3.3.0",
     "react-dom": "^16.14.0",
     "react-scripts": "5.0.0",
+    "react-tiny-popover": "^7.0.1",
     "socket.io-client": "^4.4.1",
     "typescript": "^4.6.3",
     "web-vitals": "^2.1.4"

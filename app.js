@@ -182,7 +182,11 @@ const decreaseHP = setInterval(() => {
             } else {
               if (
                 pendingArr.filter(
-                  (p) => p.amount > 0 && p.endId === endProvince.id
+                  (p) =>
+                    p.amount > 0 &&
+                    p.endId === endProvince.id &&
+                    provinceArr.find((pp) => pp.id === p.startId).owner !==
+                      endProvince.owner
                 ).length >= 2
               ) {
                 endProvince.hp -=

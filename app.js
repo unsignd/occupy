@@ -82,6 +82,7 @@ const increaseHP = setInterval(() => {
           if (
             (province.hp < 50 && province.type === 'road') ||
             (province.hp < 70 && province.type === 'farm') ||
+            (province.hp < 100 && province.type === 'military') ||
             (province.hp < 100 && province.type === undefined)
           ) {
             province.hp +=
@@ -93,6 +94,10 @@ const increaseHP = setInterval(() => {
               province.hp > 50 && province.type === 'road' ? 50 : province.hp;
             province.hp =
               province.hp > 70 && province.type === 'farm' ? 70 : province.hp;
+            province.hp =
+              province.hp > 100 && province.type === 'military'
+                ? 100
+                : province.hp;
             province.hp =
               province.hp > 100 && province.type === undefined
                 ? 100
@@ -238,7 +243,7 @@ const checkGameEnd = setInterval(() => {
           for (let i = 0; i < 5; i++) {
             provinceArr.push({
               owner: null,
-              hp: 100,
+              hp: 50,
               id: j * 5 + i,
               x: i * 25,
               y: j * 25,
@@ -397,7 +402,7 @@ io.on('connection', (socket) => {
           for (let i = 0; i < 5; i++) {
             provinceArr.push({
               owner: null,
-              hp: 100,
+              hp: 50,
               id: j * 5 + i,
               x: i * 25,
               y: j * 25,

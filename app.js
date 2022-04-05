@@ -26,26 +26,86 @@ for (let j = 0; j < 5; j++) {
   for (let i = 0; i < 5; i++) {
     provinceArr.push({
       owner: null,
-      hp: 100,
-      id: j * 10 + i,
+      hp: 50,
+      id: j * 5 + i,
       x: i * 25,
       y: j * 25,
     });
   }
 }
 
+for (let i = 0; i < 2; i++) {
+  provinceArr
+    .filter((province) => province.type === undefined)
+    .sort(() => Math.random() - 0.5)[0].type = 'military';
+}
+
+for (let i = 0; i < 2; i++) {
+  provinceArr
+    .filter((province) => province.type === undefined)
+    .sort(() => Math.random() - 0.5)[0].type = 'farm';
+}
+
+for (let i = 0; i < 3; i++) {
+  provinceArr
+    .filter((province) => province.type === undefined)
+    .sort(() => Math.random() - 0.5)[0].type = 'road';
+}
+
+provinceArr.forEach((province) => {
+  if (province.type === 'farm') {
+    province.hp = 70;
+  } else if (province.type === 'road') {
+    province.hp = 50;
+  }
+});
+
 const increaseHP = setInterval(() => {
   if (gameStarted && timeout > 180) {
     provinceArr.forEach((province) => {
       province.hp = province.hp < 0 ? 0 : province.hp;
 
-      if (typeof province.type !== 'undefined' && province.type === 'flag') {
+      if (province.type === 'flag') {
         if (province.hp < 200) {
-          province.hp += 2;
+          province.hp +=
+            2 *
+            (provinceArr.filter(
+              (p) => p.type === 'farm' && p.owner === province.owner
+            ).length +
+              1);
+
+          province.hp = province.hp > 200 ? 200 : province.hp;
         }
       } else {
-        if (province.hp < 100) {
-          province.hp += 1;
+        if (province.owner === null) {
+          if (province.hp < 50) {
+            province.hp +=
+              provinceArr.filter(
+                (p) => p.type === 'farm' && p.owner === province.owner
+              ).length + 1;
+
+            province.hp = province.hp > 100 ? 100 : province.hp;
+          }
+        } else {
+          if (
+            (province.hp < 50 && province.type === 'road') ||
+            (province.hp < 70 && province.type === 'farm') ||
+            (province.hp < 100 && province.type === undefined)
+          ) {
+            province.hp +=
+              provinceArr.filter(
+                (p) => p.type === 'farm' && p.owner === province.owner
+              ).length + 1;
+
+            province.hp =
+              province.hp > 50 && province.type === 'road' ? 50 : province.hp;
+            province.hp =
+              province.hp > 70 && province.type === 'farm' ? 70 : province.hp;
+            province.hp =
+              province.hp > 100 && province.type === undefined
+                ? 100
+                : province.hp;
+          }
         }
       }
     });
@@ -86,29 +146,67 @@ const decreaseHP = setInterval(() => {
 
           if (endProvince.type !== 'flag') {
             if (endProvince.owner === startProvince.owner) {
-              pending.amount--;
-              endProvince.hp += 2;
+              pending.amount -=
+                2 *
+                  (provinceArr.filter(
+                    (p) => p.type === 'road' && p.owner === startProvince.owner
+                  ).length +
+                    1) -
+                1;
+              startProvince.hp -=
+                2 *
+                  (provinceArr.filter(
+                    (p) => p.type === 'road' && p.owner === startProvince.owner
+                  ).length +
+                    1) -
+                1;
+              endProvince.hp +=
+                2 *
+                (provinceArr.filter(
+                  (p) => p.type === 'road' && p.owner === startProvince.owner
+                ).length +
+                  1);
             } else {
-              endProvince.hp--;
+              endProvince.hp -=
+                2 *
+                (provinceArr.filter(
+                  (p) =>
+                    p.type === 'military' && p.owner === startProvince.owner
+                ).length +
+                  1);
             }
           } else {
             if (endProvince.owner === startProvince.owner) {
-              pending.amount--;
-              endProvince.hp += 2;
+              pending.amount -= provinceArr.filter(
+                (p) => p.type === 'road' && p.owner === startProvince.owner
+              ).length;
+              startProvince.hp -= provinceArr.filter(
+                (p) => p.type === 'road' && p.owner === startProvince.owner
+              ).length;
+              endProvince.hp +=
+                provinceArr.filter(
+                  (p) => p.type === 'road' && p.owner === startProvince.owner
+                ).length + 1;
             } else {
               if (
                 pendingArr.filter(
                   (p) => p.amount > 0 && p.endId === endProvince.id
                 ).length >= 2
               ) {
-                endProvince.hp--;
+                endProvince.hp -=
+                  provinceArr.filter(
+                    (p) =>
+                      p.type === 'military' && p.owner === startProvince.owner
+                  ).length + 1;
               }
             }
           }
 
           if (endProvince.hp < 0) {
             endProvince.owner = startProvince.owner;
-            endProvince.type = undefined;
+            if (endProvince.type === 'flag') {
+              endProvince.type = undefined;
+            }
             endProvince.hp = 0;
           }
 
@@ -145,12 +243,39 @@ const checkGameEnd = setInterval(() => {
             provinceArr.push({
               owner: null,
               hp: 100,
-              id: j * 10 + i,
+              id: j * 5 + i,
               x: i * 25,
               y: j * 25,
             });
           }
         }
+
+        for (let i = 0; i < 2; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'military';
+        }
+
+        for (let i = 0; i < 2; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'farm';
+        }
+
+        for (let i = 0; i < 3; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'road';
+        }
+
+        provinceArr.forEach((province) => {
+          if (province.type === 'farm') {
+            province.hp = 70;
+          } else if (province.type === 'road') {
+            province.hp = 50;
+          }
+        });
+
         winnerList.push(user);
         chatList.push(
           {
@@ -285,12 +410,38 @@ io.on('connection', (socket) => {
             provinceArr.push({
               owner: null,
               hp: 100,
-              id: j * 10 + i,
+              id: j * 5 + i,
               x: i * 25,
               y: j * 25,
             });
           }
         }
+
+        for (let i = 0; i < 2; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'military';
+        }
+
+        for (let i = 0; i < 2; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'farm';
+        }
+
+        for (let i = 0; i < 3; i++) {
+          provinceArr
+            .filter((province) => province.type === undefined)
+            .sort(() => Math.random() - 0.5)[0].type = 'road';
+        }
+
+        provinceArr.forEach((province) => {
+          if (province.type === 'farm') {
+            province.hp = 70;
+          } else if (province.type === 'road') {
+            province.hp = 50;
+          }
+        });
 
         chatList = [];
 
@@ -313,35 +464,29 @@ io.on('connection', (socket) => {
       userDataArr.length === 0 ||
       userDataArr.find((user) => user.uid === socket.id) === undefined
     ) {
-      if (userDataArr.length === 8) {
-        socket.emit('error_game_join', '게임의 최대 인원은 8명이예요.');
+      if (userDataArr.length === 16) {
+        socket.emit('error_game_join', '게임의 최대 인원은 16명이예요.');
       } else {
         hexList.sort(
           (prev, curr) =>
             userDataArr.filter((user) => user.color === prev).length -
             userDataArr.filter((user) => user.color === curr).length
         );
+        const targetProvince = provinceArr
+          .filter(
+            (province) => province.owner === null && province.type === undefined
+          )
+          .sort(() => Math.random() - 0.5)[0];
 
         userDataArr.push({
           name: nickname,
           uid: socket.id,
           color: hexList[0],
         });
-        provinceIndex = provinceArr.findIndex(
-          (province) =>
-            province.owner === null &&
-            (province.id === 0 ||
-              province.id === 2 ||
-              province.id === 4 ||
-              province.id === 20 ||
-              province.id === 24 ||
-              province.id === 40 ||
-              province.id === 42 ||
-              province.id === 44)
-        );
-        provinceArr[provinceIndex].type = 'flag';
-        provinceArr[provinceIndex].hp = 200;
-        provinceArr[provinceIndex].owner = socket.id;
+
+        targetProvince.type = 'flag';
+        targetProvince.hp = 200;
+        targetProvince.owner = socket.id;
 
         socket.emit('load_data', {
           userData: userDataArr,
@@ -387,6 +532,8 @@ io.on('connection', (socket) => {
         'error_game_start',
         `error_game_start: ${adminUid === socket.id}, ${!gameStarted}`
       );
+      console.log(adminUid);
+      console.log(socket.id);
     }
   });
 
@@ -414,7 +561,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clear_pending', ({ startId, endId }) => {
-    if (gameStarted) {
+    if (
+      gameStarted &&
+      pendingArr.find(
+        (pending) =>
+          pending.startId === startId &&
+          pending.endId === endId &&
+          pending.amount > 0
+      ) !== undefined
+    ) {
       pendingArr.find(
         (pending) =>
           pending.startId === startId &&

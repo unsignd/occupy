@@ -34,11 +34,9 @@ for (let j = 0; j < 5; j++) {
   }
 }
 
-for (let i = 0; i < 2; i++) {
-  provinceArr
-    .filter((province) => province.type === undefined)
-    .sort(() => Math.random() - 0.5)[0].type = 'military';
-}
+provinceArr
+  .filter((province) => province.type === undefined)
+  .sort(() => Math.random() - 0.5)[0].type = 'military';
 
 for (let i = 0; i < 2; i++) {
   provinceArr
@@ -218,7 +216,7 @@ const decreaseHP = setInterval(() => {
       }
     });
   }
-}, 100);
+}, 300);
 
 const checkGameEnd = setInterval(() => {
   userDataArr.forEach((user) => {

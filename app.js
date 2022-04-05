@@ -52,14 +52,6 @@ for (let i = 0; i < 3; i++) {
     .sort(() => Math.random() - 0.5)[0].type = 'road';
 }
 
-provinceArr.forEach((province) => {
-  if (province.type === 'farm') {
-    province.hp = 70;
-  } else if (province.type === 'road') {
-    province.hp = 50;
-  }
-});
-
 const increaseHP = setInterval(() => {
   if (gameStarted && timeout > 180) {
     provinceArr.forEach((province) => {
@@ -268,14 +260,6 @@ const checkGameEnd = setInterval(() => {
             .sort(() => Math.random() - 0.5)[0].type = 'road';
         }
 
-        provinceArr.forEach((province) => {
-          if (province.type === 'farm') {
-            province.hp = 70;
-          } else if (province.type === 'road') {
-            province.hp = 50;
-          }
-        });
-
         winnerList.push(user);
         chatList.push(
           {
@@ -434,14 +418,6 @@ io.on('connection', (socket) => {
             .filter((province) => province.type === undefined)
             .sort(() => Math.random() - 0.5)[0].type = 'road';
         }
-
-        provinceArr.forEach((province) => {
-          if (province.type === 'farm') {
-            province.hp = 70;
-          } else if (province.type === 'road') {
-            province.hp = 50;
-          }
-        });
 
         chatList = [];
 

@@ -143,7 +143,7 @@ const decreaseHP = setInterval(() => {
           pending.amount--;
           startProvince.hp--;
 
-          if (endProvince.type === 'flag') {
+          if (endProvince.type !== 'flag') {
             if (endProvince.owner === startProvince.owner) {
               pending.amount -=
                 2 *

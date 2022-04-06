@@ -111,9 +111,13 @@ const gameEnd = setInterval(() => {
   if (gameStarted && timeout === 0) {
     provinceArr.forEach((province) => {
       province.hp--;
+      if (province.hp <= 0) {
+        province.owner = null;
+        province.hp = 100;
+      }
     });
   }
-}, 10);
+}, 100);
 
 const decreaseHP = setInterval(() => {
   if (gameStarted) {
@@ -325,14 +329,14 @@ const checkTimeout = setInterval(() => {
         color: '#fed501',
       });
       io.sockets.emit('load_message', chatList);
-    }
-  } else if (timeout === 0 && gameStarted) {
+    } else if (timeout === 0 && gameStarted) {
     chatList.push({
       contents: `한 팀의 성만이 남을 때까지 성의 군사력이 감소합니다!`,
       index: chatList.length,
       color: '#fed501',
     });
     io.sockets.emit('load_message', chatList);
+  }
   }
 }, 1000);
 

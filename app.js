@@ -192,7 +192,7 @@ const decreaseHP = setInterval(() => {
                     p.endId === endProvince.id &&
                     provinceArr.find((pp) => pp.id === p.startId).owner !==
                       endProvince.owner
-                ).length >= 2
+                ).length >= 4
               ) {
                 endProvince.hp -=
                   provinceArr.filter(
@@ -251,11 +251,9 @@ const checkGameEnd = setInterval(() => {
           }
         }
 
-        for (let i = 0; i < 2; i++) {
-          provinceArr
-            .filter((province) => province.type === undefined)
-            .sort(() => Math.random() - 0.5)[0].type = 'military';
-        }
+        provinceArr
+          .filter((province) => province.type === undefined)
+          .sort(() => Math.random() - 0.5)[0].type = 'military';
 
         for (let i = 0; i < 2; i++) {
           provinceArr
@@ -410,11 +408,9 @@ io.on('connection', (socket) => {
           }
         }
 
-        for (let i = 0; i < 2; i++) {
-          provinceArr
-            .filter((province) => province.type === undefined)
-            .sort(() => Math.random() - 0.5)[0].type = 'military';
-        }
+        provinceArr
+          .filter((province) => province.type === undefined)
+          .sort(() => Math.random() - 0.5)[0].type = 'military';
 
         for (let i = 0; i < 2; i++) {
           provinceArr

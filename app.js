@@ -216,7 +216,7 @@ const decreaseHP = setInterval(() => {
       }
     });
   }
-}, 125);
+}, 100);
 
 const checkGameEnd = setInterval(() => {
   userDataArr.forEach((user) => {

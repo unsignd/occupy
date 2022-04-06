@@ -143,7 +143,7 @@ const decreaseHP = setInterval(() => {
           pending.amount--;
           startProvince.hp--;
 
-          if (endProvince.type !== 'flag') {
+          if (endProvince.type === 'flag') {
             if (endProvince.owner === startProvince.owner) {
               pending.amount -=
                 2 *
@@ -222,7 +222,11 @@ const decreaseHP = setInterval(() => {
   }
 }, 100);
 
-const checkGameEnd = setInterval(() => {
+setInterval(() => {
+  provinceArr.filter((province) => province.hp >= 300 && province.type === undefined && province.owner !== null && gameStarted).forEach(province => {
+    province.type = 'flag';
+  }
+
   userDataArr.forEach((user) => {
     if (
       provinceArr.filter(

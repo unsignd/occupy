@@ -166,13 +166,11 @@ const decreaseHP = setInterval(() => {
                 ).length +
                   1);
             } else {
-              endProvince.hp -=
-                2 *
-                (provinceArr.filter(
-                  (p) =>
-                    p.type === 'military' && p.owner === startProvince.owner
-                ).length +
-                  1);
+                endProvince.hp -=
+                  provinceArr.filter(
+                    (p) =>
+                      p.type === 'military' && p.owner === startProvince.owner
+                  ).length + 1;
             }
           } else {
             if (endProvince.owner === startProvince.owner) {

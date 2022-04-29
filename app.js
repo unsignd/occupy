@@ -16,7 +16,7 @@ let checkActive = true;
 let timeout = 0;
 let userDataArr = [];
 let pendingArr = [];
-const hexList = ['#009dff', '#3bb273', '#ff6f69', '#f2c800'];
+const hexList = ['#009dff', '#3bb273', '#ff6f69', '#f2c800', '#746ab0', '#288ba8'];
 let provinceArr = [];
 let chatList = [];
 

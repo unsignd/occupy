@@ -5,4 +5,4 @@ the online occupation game based on react typescript.
 
 **NOTICE**
 This project is *out of development*.<br/>
-👉 [Github repo of new project based on occupy](https://github.com/unsignd/doop)
+👉 [Github repo of new project based on occupy](https://github.com/doop-org)
